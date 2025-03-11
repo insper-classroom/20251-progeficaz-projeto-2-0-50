@@ -1,14 +1,18 @@
 from flask import Flask, request, jsonify
 import mysql.connector
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
 db_config = {
-    'host': 'mysql-29d4c6f7-ecanavero2-5cff.d.aivencloud.com',
-    'port': 17158,
-    'user': '',
-    'password': '',
-    'database': '',
+    'host': os.getenv("MYSQL_HOST"),
+    'port': int(os.getenv("MYSQL_PORT", 3306)),
+    'user': os.getenv("MYSQL_USER"),
+    'password': os.getenv("MYSQL_PASSWORD"),
+    'database': os.getenv("MYSQL_DATABASE"),
 }
 
 @app.route('/imoveis', methods=['GET'])
