@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, url_for
 import mysql.connector
 import os
 from dotenv import load_dotenv
@@ -31,6 +31,12 @@ def listar_imoveis():
     else:
         cursor.execute("SELECT * FROM imoveis")
     imoveis = cursor.fetchall()
+    for imovel in imoveis:
+        imovel['links'] = {
+            'self': url_for('obter_imovel', imovel_id=imovel['id'], _external=True),
+            'update': url_for('atualizar_imovel', imovel_id=imovel['id'], _external=True),
+            'delete': url_for('remover_imovel', imovel_id=imovel['id'], _external=True)
+        }
     conn.close()
     return jsonify(imoveis)
 
@@ -41,7 +47,14 @@ def obter_imovel(imovel_id):
     cursor.execute("SELECT * FROM imoveis WHERE id = %s", (imovel_id,))
     imovel = cursor.fetchone()
     conn.close()
-    return jsonify(imovel) if imovel else ('', 404)
+    if imovel:
+        imovel['links'] = {
+            'self': url_for('obter_imovel', imovel_id=imovel['id'], _external=True),
+            'update': url_for('atualizar_imovel', imovel_id=imovel['id'], _external=True),
+            'delete': url_for('remover_imovel', imovel_id=imovel['id'], _external=True)
+        }
+        return jsonify(imovel)
+    return ('', 404)
 
 @app.route('/imoveis', methods=['POST'])
 def adicionar_imovel():
@@ -52,9 +65,18 @@ def adicionar_imovel():
         "INSERT INTO imoveis (logradouro, tipo_logradouro, bairro, cidade, cep, tipo, valor, data_aquisicao) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
         (data['logradouro'], data['tipo_logradouro'], data['bairro'], data['cidade'], data['cep'], data['tipo'], data['valor'], data['data_aquisicao'])
     )
+    imovel_id = cursor.lastrowid
     conn.commit()
     conn.close()
-    return ('', 201)
+    response = {
+        'id': imovel_id,
+        'links': {
+            'self': url_for('obter_imovel', imovel_id=imovel_id, _external=True),
+            'update': url_for('atualizar_imovel', imovel_id=imovel_id, _external=True),
+            'delete': url_for('remover_imovel', imovel_id=imovel_id, _external=True)
+        }
+    }
+    return jsonify(response), 201
 
 @app.route('/imoveis/<int:imovel_id>', methods=['PUT'])
 def atualizar_imovel(imovel_id):
@@ -67,7 +89,14 @@ def atualizar_imovel(imovel_id):
     )
     conn.commit()
     conn.close()
-    return ('', 204)
+    response = {
+        'id': imovel_id,
+        'links': {
+            'self': url_for('obter_imovel', imovel_id=imovel_id, _external=True),
+            'delete': url_for('remover_imovel', imovel_id=imovel_id, _external=True)
+        }
+    }
+    return jsonify(response), 204
 
 @app.route('/imoveis/<int:imovel_id>', methods=['DELETE'])
 def remover_imovel(imovel_id):
@@ -80,4 +109,3 @@ def remover_imovel(imovel_id):
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
-    
