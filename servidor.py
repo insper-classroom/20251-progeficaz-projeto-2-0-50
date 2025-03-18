@@ -13,7 +13,7 @@ db_config = {
     'user': os.getenv("MYSQL_USER"),
     'password': os.getenv("MYSQL_PASSWORD"),
     'database': os.getenv("MYSQL_DATABASE"),
-    'ssl_context': os.getenv("SSL_CONTEXT"),
+    'ssl_ca': os.getenv("SSL_CONTEXT"),
 }
 
 @app.route('/imoveis', methods=['GET'])
